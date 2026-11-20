@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Payroll Heist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f2a4a; --bg-2:#133459; --surface:#163a63; --surface-2:#1d4675;
+  --line:rgba(214,230,255,.16); --text:#eef4fc; --muted:#a9bed8;
+  --accent:#e0ad1a; --on-accent:#1b1404;
+  --danger:#ff5a66; --warn:#ffb423; --ok:#43d98a;
+  --wall:#0a1d33;
+  --display:"Big Shoulders Display", Impact, "Arial Narrow", sans-serif;
+  --sans:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme:dark;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#e6eef7; --bg-2:#dce7f3; --surface:#f6f9fd; --surface-2:#e3ecf6;
+    --line:rgba(15,42,74,.18); --text:#0f2a4a; --muted:#4a6280;
+    --accent:#b8860b; --on-accent:#fffaf0; --wall:#9fb2c8;
+    color-scheme:light;
+  }
+}
+:root[data-theme="dark"]{color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{
+  margin:0;min-height:100%;color:var(--text);font-family:var(--sans);line-height:1.5;
+  background-color:var(--bg);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:32px 32px;
+  -webkit-tap-highlight-color:transparent;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+[hidden]{display:none !important}
+
+/* HUD */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 16px;background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.hud-title{font-family:var(--display);font-weight:900;font-size:1.25rem;letter-spacing:.02em}
+.hud-stats{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.chip{font-family:var(--mono);font-size:.82rem;padding:4px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface);white-space:nowrap}
+.chip.penalty{animation:penalty .8s}
+.icon-btn{background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:999px;width:34px;height:30px;cursor:pointer;font-size:.95rem}
+
+main{max-width:680px;margin:0 auto;padding:28px 18px 56px}
+.screen{display:none}
+.screen.active{display:block;animation:fadeIn .35s ease}
+h1,h2{font-family:var(--display);font-weight:900;line-height:.95;margin:0;letter-spacing:.01em}
+h2{font-size:clamp(2rem,7vw,2.8rem)}
+.step-label{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin:0 0 6px}
+.muted{color:var(--muted)}
+.lead-in{margin:10px 0 0;color:var(--muted);max-width:60ch}
+
+/* Buttons */
+.btn{font:600 1rem var(--sans);color:var(--text);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
+  padding:12px 20px;min-height:48px;cursor:pointer;user-select:none;touch-action:manipulation;transition:transform .08s, filter .15s}
+.btn:hover{filter:brightness(1.1)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.btn.ghost{background:transparent}
+.btn.big{font-size:1.15rem;padding:16px 30px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pulse{animation:pulse 1.2s ease-in-out infinite}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.status{text-align:center;min-height:1.6em;font-weight:600;margin:14px 0 0}
+.fine{font-size:.82rem;color:var(--muted);text-align:center;margin:10px 0 0}
+
+/* Intro */
+.intro{padding-top:4vh}
+.intro .event{font-family:var(--mono);color:var(--accent);margin:0 0 14px;font-size:.9rem}
+.intro h1{font-size:clamp(3.6rem,17vw,7.5rem);text-transform:uppercase}
+.intro .tagline{font-size:1.15rem;margin:18px 0 0;max-width:46ch}
+.plan{list-style:none;padding:0;margin:28px 0 30px;display:grid;gap:0;border-top:1px dashed var(--line)}
+.plan li{display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:baseline;padding:12px 0;border-bottom:1px dashed var(--line)}
+.plan .n{font-family:var(--display);font-weight:900;font-size:1.7rem;color:var(--accent);line-height:1}
+.plan b{display:block}
+.plan span.d{color:var(--muted);font-size:.93rem}
+
+/* Stage 1: floor plan */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px;margin-top:20px}
+.floor{display:grid;gap:3px;max-width:380px;margin:0 auto;touch-action:none;user-select:none;-webkit-user-select:none}
+.cell{position:relative;aspect-ratio:1;border-radius:4px;background:var(--surface-2);display:grid;place-items:center;
+  font-size:clamp(15px,5.2vw,24px);line-height:1;transition:background .12s, box-shadow .12s}
+.cell.wall{background:var(--wall);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+.cell.laser{background:repeating-linear-gradient(90deg, var(--surface-2) 0 5px, color-mix(in srgb, var(--surface-2) 75%, var(--danger)) 5px 6px)}
+.cell.laser.warn{background:rgba(255,180,35,.35)}
+.cell.laser.on{background:rgba(255,90,102,.45)}
+.cell.laser.warn::before{content:"";position:absolute;left:0;right:0;top:calc(50% - 1px);height:2px;
+  background:repeating-linear-gradient(90deg, var(--danger) 0 4px, transparent 4px 8px);opacity:.8}
+.cell.laser.on::before{content:"";position:absolute;left:0;right:0;top:calc(50% - 1.5px);height:3px;background:var(--danger);box-shadow:0 0 8px var(--danger)}
+.cell.seen{background:rgba(255,226,110,.5);box-shadow:inset 0 0 0 1px rgba(255,200,60,.8)}
+.cell.door{background:color-mix(in srgb, var(--accent) 35%, var(--surface-2))}
+.cell.here{box-shadow:inset 0 0 0 2px var(--accent)}
+.cell span{position:relative;z-index:1}
+.legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+.dpad{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(2,52px);gap:6px;justify-content:center;margin-top:14px;
+  grid-template-areas:". up ." "left down right"}
+.dpad .btn{padding:0;min-height:0;font-size:1.2rem}
+.dpad .up{grid-area:up}.dpad .left{grid-area:left}.dpad .down{grid-area:down}.dpad .right{grid-area:right}
+body.alarm::before{height:auto;inset:0;z-index:60;pointer-events:none;background:transparent;
+  box-shadow:inset 0 0 140px 40px rgba(255,40,60,.75);animation:alarm .7s ease-out forwards}
+
+/* Stage 2: terminal (always a dark screen) */
+.terminal{background:#06140c;border:1px solid #1f4a31;border-radius:14px;overflow:hidden;font-family:var(--mono);color:#62f2a0;margin-top:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.term-bar{display:flex;gap:6px;align-items:center;padding:8px 12px;background:#0b2215}
+.term-bar span{width:10px;height:10px;border-radius:50%;background:#2f6b47}
+.term-bar em{margin-left:auto;font-style:normal;opacity:.65;font-size:.75rem}
+.term-body{padding:14px 16px 18px}
+.term-line{margin:0;font-size:.9rem;color:#a5f5c7}
+.clues{list-style:none;padding:0;margin:14px 0;display:grid;gap:10px}
+.clues li{display:flex;gap:12px;align-items:center;font-size:.86rem;color:#c3f7d9}
+.digits{display:flex;gap:3px;flex:none}
+.digits b{display:inline-grid;place-items:center;width:26px;height:30px;border:1px solid #2b6b45;border-radius:5px;color:#62f2a0;font-weight:700}
+.code-display{display:flex;gap:10px;justify-content:center;margin:18px 0 8px}
+.code-display span{width:54px;height:64px;border:2px solid #2b6b45;border-radius:8px;display:grid;place-items:center;font-size:2rem;font-weight:700;color:#62f2a0}
+.code-display span.filled{border-color:#62f2a0;box-shadow:0 0 14px rgba(98,242,160,.35)}
+.term-msg{text-align:center;margin:8px 0 0;font-size:.95rem}
+.terminal.denied .term-msg{color:#ff7b86}
+.terminal.granted{border-color:#62f2a0;box-shadow:0 0 34px rgba(98,242,160,.4)}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:320px;margin:16px auto 0}
+.keypad .btn{font-family:var(--mono);font-size:1.35rem;min-height:56px;padding:8px}
+.hints p{background:var(--surface);border-left:3px solid var(--accent);padding:10px 14px;border-radius:8px;margin:12px 0 0;font-size:.93rem}
+
+/* Stage 3: safe dial */
+.safe{text-align:center}
+.combo{display:flex;justify-content:center;gap:10px}
+.combo span{width:54px;height:54px;display:grid;place-items:center;font:700 1.4rem var(--mono);border:2px dashed var(--line);border-radius:10px;color:var(--muted)}
+.combo span.filled{border:2px solid var(--accent);color:var(--accent);background:color-mix(in srgb, var(--accent) 12%, transparent)}
+.dial-wrap{position:relative;width:min(290px,80vw);margin:28px auto 10px}
+.marker{position:absolute;top:-22px;left:50%;transform:translateX(-50%);color:var(--accent);font-size:1.3rem;line-height:1;z-index:2}
+#dial{width:100%;height:auto;display:block;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+#dial:active{cursor:grabbing}
+#dial .face{fill:#2b333e;stroke:#8f99a6;stroke-width:3}
+#dial .ring{fill:none;stroke:#454f5c;stroke-width:1.5}
+#dial .tick{stroke:#d6dce3;stroke-width:1.4}
+#dial .tick.major{stroke-width:2.6}
+#dial .num{fill:#eef2f6;font:700 12px var(--mono);text-anchor:middle;dominant-baseline:central}
+#dial .knob{fill:#3b4553;stroke:#a6b0bc;stroke-width:2}
+#dial .grip{stroke:#7d8896;stroke-width:3;stroke-linecap:round}
+.readout{display:flex;justify-content:center;gap:10px;align-items:center;font-family:var(--mono)}
+.led{width:14px;height:14px;border-radius:50%;background:#4a2a2e;box-shadow:inset 0 1px 3px rgba(0,0,0,.5);transition:background .1s, box-shadow .1s}
+.led.on{background:var(--ok);box-shadow:0 0 16px var(--ok)}
+.meter{display:flex;gap:5px;justify-content:center;align-items:flex-end;height:32px;margin-top:12px}
+.meter i{width:13px;background:var(--surface-2);border:1px solid var(--line);border-radius:3px;transition:background .1s}
+.meter i:nth-child(1){height:8px}.meter i:nth-child(2){height:14px}.meter i:nth-child(3){height:20px}.meter i:nth-child(4){height:26px}.meter i:nth-child(5){height:32px}
+.meter i.lit{background:var(--warn)}
+.meter.hot i.lit{background:var(--ok)}
+.meter-label{font-size:.78rem;color:var(--muted);margin:4px 0 0}
+
+/* Finale */
+.finale{text-align:center}
+.vault-scene{position:relative;width:min(250px,66vw);aspect-ratio:1;margin:8px auto 0;perspective:900px}
+.vault-inner{position:absolute;inset:6%;border-radius:50%;display:grid;place-items:center;font-size:4rem;
+  background:radial-gradient(circle, #fff1b8 0%, var(--accent) 38%, #5e4300 80%);box-shadow:inset 0 0 40px rgba(0,0,0,.6)}
+.vault-door{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%, #a4adb8, #545c67 58%, #2c323b);border:9px solid #737c88;
+  box-shadow:0 14px 40px rgba(0,0,0,.45);transform-origin:left center;transition:transform 1.3s cubic-bezier(.6,.05,.3,1) .6s}
+.vault-door::before{content:"";position:absolute;inset:10%;border-radius:50%;border:2px dashed rgba(255,255,255,.25)}
+.vault-door.open{transform:rotateY(-108deg)}
+.wheel{width:44%;aspect-ratio:1;border-radius:50%;border:7px solid #d2d8df;position:relative;transition:transform .7s ease}
+.wheel::before,.wheel::after{content:"";position:absolute;background:#d2d8df;border-radius:3px}
+.wheel::before{left:-22%;right:-22%;top:calc(50% - 4px);height:8px}
+.wheel::after{top:-22%;bottom:-22%;left:calc(50% - 4px);width:8px}
+.vault-door.open .wheel{transform:rotate(300deg)}
+.reveal{margin-top:24px;min-height:150px}
+.reveal-lead{font-family:var(--mono);color:var(--muted);margin:0;opacity:0;transition:opacity .4s}
+.reveal-lead.show{opacity:1}
+.winner{font-size:clamp(2.6rem,11vw,4.6rem);color:var(--accent);margin:.15em 0 .1em;opacity:0;transform:scale(.6);
+  transition:opacity .5s, transform .6s cubic-bezier(.2,1.6,.4,1);text-transform:uppercase;overflow-wrap:anywhere}
+.winner.show{opacity:1;transform:scale(1)}
+.prize{font-size:1.2rem;font-weight:600;margin:0;opacity:0;transition:opacity .5s .2s}
+.prize.show{opacity:1}
+.after{opacity:0;transition:opacity .5s;pointer-events:none}
+.after.show{opacity:1;pointer-events:auto}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 6px}
+.stat b{display:block;font:700 1.5rem var(--mono)}
+.stat span{font-size:.8rem;color:var(--muted)}
+
+/* Overlay */
+.overlay{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:rgba(5,15,28,.6);backdrop-filter:blur(4px)}
+.overlay-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px 24px;max-width:400px;width:100%;text-align:center;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+.overlay-card h2{margin:4px 0 10px}
+.overlay-card p{margin:0 0 20px}
+
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:30}
+.shake{animation:shake .4s}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent)}50%{box-shadow:0 0 0 8px transparent}}
+@keyframes alarm{from{opacity:1}to{opacity:0}}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes penalty{0%,100%{background:var(--surface)}30%{background:var(--danger);color:#fff}}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;transition-delay:0s !important}
+}
+@media (max-width:480px){
+  .hud-title{display:none}
+  .hud{justify-content:center}
+  .hud-stats{flex-wrap:nowrap}
+  .chip{font-size:.75rem;padding:3px 7px}
+  .plan li{grid-template-columns:36px 1fr}
+  main{padding-top:16px}
+  #s-stage1 .panel{margin-top:12px;padding:12px 10px}
+  #s-stage1 .status{margin-top:10px}
+  .dpad{grid-template-rows:repeat(2,48px);margin-top:10px}
+}
+</style>
+</head>
+<body>
+
+<header class="hud" id="hud" hidden>
+  <div class="hud-title">The Payroll Heist</div>
+  <div class="hud-stats">
+    <span class="chip" id="hud-stage">Stage 1 of 3</span>
+    <span class="chip" id="hud-time-chip">⏱ <b id="hud-time">0:00</b></span>
+    <span class="chip">🚨 <b id="hud-alarms">0</b></span>
+    <button class="icon-btn" id="mute-btn" aria-label="Mute sound">🔊</button>
+  </div>
+</header>
+
+<main>
+  <!-- Intro -->
+  <section class="screen active" id="s-intro">
+    <div class="intro">
+      <p class="event" id="intro-event"></p>
+      <h1>The Payroll Heist</h1>
+      <p class="tagline">The jackpot winner's name is locked inside the payroll vault. Get in, crack the safe, and find out who won. Payroll still runs on time.</p>
+      <ol class="plan">
+        <li><span class="n">1</span><div><b>Sneak in</b><span class="d">Dodge the lasers and the guards.</span></div></li>
+        <li><span class="n">2</span><div><b>Hack the terminal</b><span class="d">Work out the access code from the clues.</span></div></li>
+        <li><span class="n">3</span><div><b>Crack the safe</b><span class="d">Turn the dial and listen for the click.</span></div></li>
+      </ol>
+      <button class="btn primary big" id="start-btn">Start the heist</button>
+      <p class="fine" style="text-align:left">Sound on is best. Your time is tracked, so you can compare with your team.</p>
+    </div>
+  </section>
+
+  <!-- Stage 1 -->
+  <section class="screen" id="s-stage1">
+    <p class="step-label">Stage 1 of 3</p>
+    <h2>Get past security</h2>
+    <p class="lead-in">Dodge the lasers and stay out of the guards' flashlights. Get caught and you're back at the start.</p>
+    <div class="panel">
+      <div class="floor" id="floor" aria-label="Office floor plan"></div>
+      <div class="legend">
+        <span><i style="background:var(--warn)"></i>Laser about to fire</span>
+        <span><i style="background:var(--danger)"></i>Laser on</span>
+        <span><i style="background:rgba(255,226,110,.8)"></i>Flashlight</span>
+      </div>
+    </div>
+    <p class="status" id="s1-status" aria-live="polite">Reach the vault door 🚪</p>
+    <div class="dpad">
+      <button class="btn up" data-dir="up" aria-label="Move up">▲</button>
+      <button class="btn left" data-dir="left" aria-label="Move left">◀</button>
+      <button class="btn down" data-dir="down" aria-label="Move down">▼</button>
+      <button class="btn right" data-dir="right" aria-label="Move right">▶</button>
+    </div>
+    <p class="fine">Arrow keys or WASD. On a phone, use the pad or swipe on the map.</p>
+  </section>
+
+  <!-- Stage 2 -->
+  <section class="screen" id="s-stage2">
+    <p class="step-label">Stage 2 of 3</p>
+    <h2>Hack the terminal</h2>
+    <p class="lead-in">Someone left the access log open. Use the clues to work out the 3-digit code.</p>
+    <div class="terminal" id="terminal">
+      <div class="term-bar"><span></span><span></span><span></span><em>vault-sec</em></div>
+      <div class="term-body">
+        <p class="term-line">&gt; Failed login attempts:</p>
+        <ul class="clues" id="clues"></ul>
+        <div class="code-display" id="code-display"><span></span><span></span><span></span></div>
+        <p class="term-msg" id="term-msg" aria-live="polite">&gt; Enter access code_</p>
+      </div>
+    </div>
+    <div class="keypad" id="keypad"></div>
+    <div class="controls"><button class="btn ghost" id="hint-btn">Get a hint (+15s)</button></div>
+    <div class="hints" id="hints"></div>
+  </section>
+
+  <!-- Stage 3 -->
+  <section class="screen" id="s-stage3">
+    <p class="step-label">Stage 3 of 3</p>
+    <h2>Crack the safe</h2>
+    <p class="lead-in">Turn the dial. The signal gets stronger as you get close. When the light turns green, lock in the number.</p>
+    <div class="panel safe">
+      <div class="combo" id="combo"><span>?</span><span>?</span><span>?</span></div>
+      <div class="dial-wrap" id="dial-wrap">
+        <div class="marker" aria-hidden="true">▼</div>
+        <svg id="dial" viewBox="-110 -110 220 220" role="slider" tabindex="0" aria-label="Safe dial" aria-valuemin="0" aria-valuemax="39" aria-valuenow="0"></svg>
+      </div>
+      <div class="readout"><span class="led" id="led"></span><span>Dial <b id="dial-num">0</b></span></div>
+      <div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <p class="meter-label">Signal</p>
+      <p class="status" id="s3-status" aria-live="polite">Find the first number.</p>
+      <div class="controls">
+        <button class="btn" id="dial-left" aria-label="Turn dial left">◀</button>
+        <button class="btn primary" id="lock-btn">Lock in</button>
+        <button class="btn" id="dial-right" aria-label="Turn dial right">▶</button>
+      </div>
+      <p class="fine">Drag the dial or hold the arrows. Keyboard: ← → and Enter.</p>
+    </div>
+  </section>
+
+  <!-- Finale -->
+  <section class="screen finale" id="s-finale">
+    <div class="vault-scene">
+      <div class="vault-inner" aria-hidden="true">💰</div>
+      <div class="vault-door" id="vault-door"><div class="wheel"></div></div>
+    </div>
+    <div class="reveal" aria-live="polite">
+      <p class="reveal-lead" id="reveal-lead">The jackpot winner is…</p>
+      <h2 class="winner" id="winner-name"></h2>
+      <p class="prize" id="prize"></p>
+    </div>
+    <div class="after" id="after">
+      <div class="stats">
+        <div class="stat"><b id="st-time">0:00</b><span>Your time</span></div>
+        <div class="stat"><b id="st-alarms">0</b><span>Alarms tripped</span></div>
+        <div class="stat"><b id="st-hints">0</b><span>Hints used</span></div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="share-btn">Copy my result</button>
+        <button class="btn" id="again-btn">Play again</button>
+      </div>
+      <p class="status" id="share-msg" aria-live="polite"></p>
+    </div>
+  </section>
+</main>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+    <p class="step-label" id="ov-kicker"></p>
+    <h2 id="ov-title"></h2>
+    <p class="muted" id="ov-text"></p>
+    <button class="btn primary" id="ov-btn">Continue</button>
+  </div>
+</div>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+/* =========================================================
+   EDIT THESE BEFORE PUBLISHING
+   ========================================================= */
+const CONFIG = {
+  winnerCode: "QVNTSUFS",                // Winner's name, encoded so it can't be read in "View source"
+  prize: "",                          // Optional prize line under the name. Leave empty to hide it
+  eventName: "IBEX Payroll Jackpot",  // Small line above the title on the start screen
+  shareUrl: "",                       // Link added to "Copy my result". Leave empty to use the page's own URL
+  accentColor: ""                     // Optional brand colour, e.g. "#0055a5". Leave empty for the default gold
+};
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (CONFIG.accentColor) document.documentElement.style.setProperty('--accent', CONFIG.accentColor);
+  $('#intro-event').textContent = CONFIG.eventName;
+
+  /* ---------- State, timer, HUD ---------- */
+  const state = { start: 0, penalty: 0, alarms: 0, hints: 0, timerId: null, pausedAt: 0, endTime: 0, muted: false, screen: 's-intro' };
+
+  function show(id) {
+    document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === id));
+    state.screen = id;
+    window.scrollTo(0, 0);
+  }
+  function fmt(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+  function elapsed() {
+    const now = state.endTime || state.pausedAt || Date.now();
+    return now - state.start + state.penalty;
+  }
+  function updateHud() {
+    $('#hud-time').textContent = fmt(elapsed());
+    $('#hud-alarms').textContent = state.alarms;
+  }
+  function startTimer() {
+    state.start = Date.now(); state.pausedAt = 0; state.endTime = 0;
+    clearInterval(state.timerId);
+    state.timerId = setInterval(updateHud, 250);
+    updateHud();
+  }
+  function pauseTimer() {
+    if (state.pausedAt || state.endTime) return;
+    state.pausedAt = Date.now();
+    clearInterval(state.timerId);
+    updateHud();
+  }
+  function resumeTimer() {
+    if (!state.pausedAt) return;
+    state.start += Date.now() - state.pausedAt;
+    state.pausedAt = 0;
+    clearInterval(state.timerId);
+    state.timerId = setInterval(updateHud, 250);
+    updateHud();
+  }
+  function stopTimer() {
+    if (state.pausedAt) { state.endTime = state.pausedAt; state.pausedAt = 0; }
+    else state.endTime = Date.now();
+    clearInterval(state.timerId);
+    updateHud();
+  }
+  function setStage(text) { $('#hud-stage').textContent = text; }
+
+  /* ---------- Sound ---------- */
+  let actx = null;
+  function ensureAudio() {
+    try {
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') actx.resume();
+    } catch (e) { actx = null; }
+  }
+  function tone(freq, dur, type, vol, delay) {
+    if (state.muted || !actx) return;
+    const t = actx.currentTime + (delay || 0);
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol || 0.05, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  const sfx = {
+    step: () => tone(300, 0.04, 'triangle', 0.03),
+    alarm: () => { tone(880, 0.18, 'sawtooth', 0.05); tone(620, 0.22, 'sawtooth', 0.05, 0.18); },
+    success: () => [523, 659, 784].forEach((f, i) => tone(f, 0.16, 'triangle', 0.06, i * 0.1)),
+    key: () => tone(700, 0.03, 'square', 0.025),
+    deny: () => tone(130, 0.3, 'sawtooth', 0.05),
+    tick: () => tone(1100, 0.015, 'square', 0.012),
+    click: () => { tone(2600, 0.035, 'square', 0.09); tone(1400, 0.05, 'square', 0.05, 0.02); },
+    clunk: () => tone(110, 0.25, 'square', 0.05),
+    creak: () => { tone(70, 0.9, 'sawtooth', 0.03, 0.6); tone(55, 0.9, 'sawtooth', 0.025, 0.9); },
+    drum: (i) => tone(i % 2 ? 100 : 90, 0.06, 'square', 0.035),
+    fanfare: () => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, i === 5 ? 0.6 : 0.16, 'triangle', 0.07, i * 0.13))
+  };
+  function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+  $('#mute-btn').addEventListener('click', () => {
+    state.muted = !state.muted;
+    $('#mute-btn').textContent = state.muted ? '🔇' : '🔊';
+    $('#mute-btn').setAttribute('aria-label', state.muted ? 'Turn sound on' : 'Mute sound');
+  });
+
+  function shake(el) {
+    if (reduceMotion) return;
+    el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+  }
+
+  /* ---------- Stage clear overlay ---------- */
+  function stageClear(kicker, title, text, btnText, next) {
+    pauseTimer();
+    $('#ov-kicker').textContent = kicker;
+    $('#ov-title').textContent = title;
+    $('#ov-text').textContent = text;
+    const btn = $('#ov-btn');
+    btn.textContent = btnText;
+    $('#overlay').hidden = false;
+    btn.focus();
+    btn.onclick = () => { $('#overlay').hidden = true; resumeTimer(); next(); };
+  }
+
+  /* =========================================================
+     STAGE 1: 2D floor plan with lasers and patrolling guards
+     ========================================================= */
+  const S1 = {
+    map: [
+      '....#...D',
+      '.##.#.##.',
+      '.........',
+      '##.###.##',
+      '.........',
+      '.###.###.',
+      '.........',
+      '#.##.##.#',
+      '.........',
+      '.#.###.#.',
+      'S........'
+    ],
+    lasers: [
+      { row: 2, safe: 1700, warn: 450, on: 1100, offset: 0 },
+      { row: 6, safe: 1500, warn: 450, on: 1200, offset: 1300 }
+    ],
+    guardSetup: [
+      { row: 4, col: 0, dir: 1, every: 420, vision: 2 },
+      { row: 8, col: 8, dir: -1, every: 520, vision: 2 }
+    ],
+    rows: 11, cols: 9, start: null, door: null, pos: null, guards: [],
+    cells: [], tick: null, t0: 0, invuln: 0, done: false, holdT: null, holdI: null
+  };
+  const DIRS = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] };
+  const isWall = (r, c) => r < 0 || c < 0 || r >= S1.rows || c >= S1.cols || S1.map[r][c] === '#';
+
+  function buildFloor() {
+    const f = $('#floor');
+    f.innerHTML = '';
+    f.style.gridTemplateColumns = `repeat(${S1.cols}, 1fr)`;
+    S1.cells = [];
+    for (let r = 0; r < S1.rows; r++) {
+      S1.cells.push([]);
+      for (let c = 0; c < S1.cols; c++) {
+        const ch = S1.map[r][c];
+        const el = document.createElement('div');
+        el.className = 'cell';
+        if (ch === '#') el.classList.add('wall');
+        if (ch === 'S') S1.start = [r, c];
+        if (ch === 'D') { S1.door = [r, c]; el.classList.add('door'); }
+        if (ch !== '#' && S1.lasers.some((l) => l.row === r)) el.classList.add('laser');
+        el.appendChild(document.createElement('span'));
+        el._last = { icon: '', cls: '' };
+        f.appendChild(el);
+        S1.cells[r].push(el);
+      }
+    }
+  }
+  function laserState(l, t) {
+    const cyc = l.safe + l.warn + l.on;
+    const p = (t + l.offset) % cyc;
+    return p < l.safe ? 'off' : p < l.safe + l.warn ? 'warn' : 'on';
+  }
+  function visionCells(g) {
+    const out = [];
+    for (let k = 1; k <= g.vision; k++) {
+      const c = g.col + g.dir * k;
+      if (isWall(g.row, c)) break;
+      out.push([g.row, c]);
+    }
+    return out;
+  }
+  function renderS1() {
+    const seen = new Set();
+    S1.guards.forEach((g) => visionCells(g).forEach(([r, c]) => seen.add(r + ',' + c)));
+    for (let r = 0; r < S1.rows; r++) {
+      const l = S1.lasers.find((x) => x.row === r);
+      for (let c = 0; c < S1.cols; c++) {
+        const el = S1.cells[r][c];
+        if (S1.map[r][c] === '#') continue;
+        let icon = '';
+        if (S1.door[0] === r && S1.door[1] === c) icon = '🚪';
+        if (S1.guards.some((g) => g.row === r && g.col === c)) icon = '👮';
+        if (S1.pos[0] === r && S1.pos[1] === c) icon = '🥷';
+        const st = l ? l.st : '';
+        const cls = [st, seen.has(r + ',' + c) ? 'seen' : '', S1.pos[0] === r && S1.pos[1] === c ? 'here' : ''].join(' ');
+        if (el._last.icon !== icon) { el.firstChild.textContent = icon; el._last.icon = icon; }
+        if (el._last.cls !== cls) {
+          el.classList.toggle('warn', st === 'warn');
+          el.classList.toggle('on', st === 'on');
+          el.classList.toggle('seen', seen.has(r + ',' + c));
+          el.classList.toggle('here', S1.pos[0] === r && S1.pos[1] === c);
+          el._last.cls = cls;
+        }
+      }
+    }
+  }
+  function s1Loop() {
+    const now = performance.now();
+    const t = now - S1.t0;
+    S1.lasers.forEach((l) => { l.st = laserState(l, t); });
+    S1.guards.forEach((g) => {
+      if (now - g.last >= g.every) {
+        g.last = now;
+        if (isWall(g.row, g.col + g.dir)) g.dir *= -1;
+        g.col += g.dir;
+        if (isWall(g.row, g.col + g.dir)) g.dir *= -1;
+      }
+    });
+    renderS1();
+    checkCaught();
+  }
+  function checkCaught() {
+    if (S1.done || performance.now() < S1.invuln) return;
+    const [r, c] = S1.pos;
+    const laser = S1.lasers.some((l) => l.row === r && l.st === 'on');
+    const guard = S1.guards.some((g) => (g.row === r && g.col === c) || visionCells(g).some(([vr, vc]) => vr === r && vc === c));
+    if (laser) caught('🚨 Laser tripped! Back to the start.');
+    else if (guard) caught('🔦 A guard spotted you! Back to the start.');
+  }
+  function caught(msg) {
+    state.alarms++; updateHud();
+    sfx.alarm(); buzz(150);
+    document.body.classList.remove('alarm'); void document.body.offsetWidth; document.body.classList.add('alarm');
+    setTimeout(() => document.body.classList.remove('alarm'), 750);
+    $('#s1-status').textContent = msg;
+    S1.pos = S1.start.slice();
+    S1.invuln = performance.now() + 900;
+    renderS1();
+  }
+  function s1Move(dir) {
+    if (S1.done || !DIRS[dir]) return;
+    const r = S1.pos[0] + DIRS[dir][0], c = S1.pos[1] + DIRS[dir][1];
+    if (isWall(r, c)) return;
+    S1.pos = [r, c];
+    sfx.step();
+    const st = $('#s1-status');
+    if (/^(🚨|🔦)/u.test(st.textContent)) st.textContent = 'Reach the vault door 🚪';
+    renderS1();
+    if (r === S1.door[0] && c === S1.door[1]) {
+      S1.done = true;
+      clearInterval(S1.tick);
+      sfx.success();
+      const text = state.alarms === 0 ? 'Not a single alarm. Smooth.' : `You tripped ${state.alarms} alarm${state.alarms === 1 ? '' : 's'}, but you made it in.`;
+      setTimeout(() => stageClear('Stage 1 cleared', "You're inside.", text, 'Hack the terminal', startStage2), 350);
+      return;
+    }
+    checkCaught();
+  }
+  function startStage1() {
+    show('s-stage1'); setStage('Stage 1 of 3');
+    S1.done = false;
+    buildFloor();
+    S1.pos = S1.start.slice();
+    const now = performance.now();
+    S1.guards = S1.guardSetup.map((g) => Object.assign({}, g, { last: now }));
+    S1.lasers.forEach((l) => { l.st = 'off'; });
+    $('#s1-status').textContent = 'Reach the vault door 🚪';
+    S1.t0 = now;
+    S1.invuln = now + 600;
+    clearInterval(S1.tick);
+    S1.tick = setInterval(s1Loop, 40);
+    s1Loop();
+  }
+  // D-pad with hold-to-repeat
+  document.querySelectorAll('.dpad .btn').forEach((btn) => {
+    const dir = btn.dataset.dir;
+    const stop = () => { clearTimeout(S1.holdT); clearInterval(S1.holdI); };
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); stop(); s1Move(dir);
+      S1.holdT = setTimeout(() => { S1.holdI = setInterval(() => s1Move(dir), 160); }, 300);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, stop));
+    btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); s1Move(dir); } });
+  });
+  // Swipe on the map
+  (function () {
+    const f = $('#floor');
+    let sx = 0, sy = 0, active = false;
+    f.addEventListener('pointerdown', (e) => { active = true; sx = e.clientX; sy = e.clientY; });
+    f.addEventListener('pointerup', (e) => {
+      if (!active) return;
+      active = false;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+      s1Move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+    });
+    f.addEventListener('pointercancel', () => { active = false; });
+  })();
+
+  /* =========================================================
+     STAGE 2: Terminal logic puzzle (single solution: 715)
+     ========================================================= */
+  const S2 = {
+    answer: '715', input: '', wrong: 0, hintIdx: 0, done: false,
+    clues: [
+      ['845', 'One digit is correct and in the right place'],
+      ['831', 'One digit is correct but in the wrong place'],
+      ['578', 'Two digits are correct but both are in the wrong place'],
+      ['294', 'Nothing is correct'],
+      ['247', 'One digit is correct but in the wrong place']
+    ],
+    hints: [
+      'Start with "Nothing is correct": 2, 9 and 4 are not in the code.',
+      'So in 2 4 7, the correct digit must be 7. It is not last (2 4 7) and not in the middle (5 7 8), so the code starts with 7.',
+      'From 5 7 8, the other correct digit is 5 or 8. Clue 8 4 5 has one digit in the right place. Which one fits?'
+    ]
+  };
+  function buildStage2() {
+    $('#clues').innerHTML = S2.clues.map(([d, t]) =>
+      `<li><span class="digits">${d.split('').map((x) => `<b>${x}</b>`).join('')}</span><span>${t}</span></li>`).join('');
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0', 'enter'];
+    const kp = $('#keypad');
+    kp.innerHTML = '';
+    keys.forEach((k) => {
+      const b = document.createElement('button');
+      b.className = 'btn' + (k === 'enter' ? ' primary' : '');
+      b.textContent = k === 'del' ? '⌫' : k === 'enter' ? 'Enter' : k;
+      if (k === 'del') b.setAttribute('aria-label', 'Delete');
+      b.addEventListener('click', () => s2Press(k));
+      kp.appendChild(b);
+    });
+  }
+  function renderCode() {
+    $('#code-display').querySelectorAll('span').forEach((s, i) => {
+      s.textContent = S2.input[i] || '';
+      s.classList.toggle('filled', !!S2.input[i]);
+    });
+  }
+  function s2Press(k) {
+    if (S2.done) return;
+    const term = $('#terminal');
+    if (/^\d$/.test(k)) {
+      if (S2.input.length < 3) { S2.input += k; sfx.key(); }
+      term.classList.remove('denied');
+      $('#term-msg').textContent = '> Enter access code_';
+    } else if (k === 'del') {
+      S2.input = S2.input.slice(0, -1); sfx.key();
+    } else if (k === 'enter') {
+      s2Submit();
+      return;
+    }
+    renderCode();
+  }
+  function s2Submit() {
+    const term = $('#terminal');
+    if (S2.input.length < 3) { $('#term-msg').textContent = '> Code needs 3 digits_'; sfx.deny(); return; }
+    if (S2.input === S2.answer) {
+      S2.done = true;
+      term.classList.remove('denied'); term.classList.add('granted');
+      $('#term-msg').textContent = '> ACCESS GRANTED';
+      sfx.success();
+      const text = state.hints === 0 ? 'Cracked without a single hint.' : `Cracked with ${state.hints} hint${state.hints === 1 ? '' : 's'}.`;
+      setTimeout(() => stageClear('Stage 2 cleared', 'System unlocked.', text, 'Crack the safe', startStage3), 700);
+    } else {
+      S2.wrong++;
+      term.classList.add('denied');
+      $('#term-msg').textContent = `> ACCESS DENIED (attempt ${S2.wrong})`;
+      sfx.deny(); buzz(120); shake(term);
+      S2.input = ''; renderCode();
+      if (S2.wrong >= 2 && S2.hintIdx < S2.hints.length) $('#hint-btn').classList.add('pulse');
+    }
+  }
+  $('#hint-btn').addEventListener('click', () => {
+    if (S2.done || S2.hintIdx >= S2.hints.length) return;
+    state.penalty += 15000; state.hints++;
+    const chip = $('#hud-time-chip');
+    chip.classList.remove('penalty'); void chip.offsetWidth; chip.classList.add('penalty');
+    updateHud();
+    const p = document.createElement('p');
+    p.textContent = `Hint ${S2.hintIdx + 1}: ${S2.hints[S2.hintIdx]}`;
+    $('#hints').appendChild(p);
+    S2.hintIdx++;
+    $('#hint-btn').classList.remove('pulse');
+    if (S2.hintIdx >= S2.hints.length) { $('#hint-btn').disabled = true; $('#hint-btn').textContent = 'No more hints'; }
+  });
+  function startStage2() {
+    show('s-stage2'); setStage('Stage 2 of 3');
+  }
+  function resetStage2() {
+    S2.input = ''; S2.wrong = 0; S2.hintIdx = 0; S2.done = false;
+    $('#terminal').classList.remove('granted', 'denied');
+    $('#term-msg').textContent = '> Enter access code_';
+    $('#hints').innerHTML = '';
+    const hb = $('#hint-btn');
+    hb.disabled = false; hb.textContent = 'Get a hint (+15s)'; hb.classList.remove('pulse');
+    renderCode();
+  }
+
+  /* =========================================================
+     STAGE 3: Safe dial
+     ========================================================= */
+  const S3 = { max: 40, pos: 0, rot: 0, targets: [], idx: 0, done: false, dragging: false, last: 0, acc: 0, holdT: null, holdI: null };
+  const cdist = (a, b) => { const d = Math.abs(a - b) % S3.max; return Math.min(d, S3.max - d); };
+  function genTargets() {
+    let t;
+    do {
+      t = [];
+      while (t.length < 3) {
+        const n = 1 + Math.floor(Math.random() * (S3.max - 1));
+        if (!t.includes(n)) t.push(n);
+      }
+    } while (cdist(0, t[0]) < 6 || cdist(t[0], t[1]) < 6 || cdist(t[1], t[2]) < 6);
+    return t;
+  }
+  function buildDial() {
+    const NS = 'http://www.w3.org/2000/svg';
+    let g = `<g id="dial-rot"><circle class="face" r="104"/><circle class="ring" r="66"/>`;
+    for (let i = 0; i < S3.max; i++) {
+      const a = (i * 360 / S3.max) * Math.PI / 180;
+      const major = i % 5 === 0;
+      const r1 = major ? 86 : 92, r2 = 100;
+      g += `<line class="tick${major ? ' major' : ''}" x1="${(Math.sin(a) * r1).toFixed(2)}" y1="${(-Math.cos(a) * r1).toFixed(2)}" x2="${(Math.sin(a) * r2).toFixed(2)}" y2="${(-Math.cos(a) * r2).toFixed(2)}"/>`;
+      if (major) {
+        const x = Math.sin(a) * 75, y = -Math.cos(a) * 75;
+        g += `<text class="num" x="${x.toFixed(2)}" y="${y.toFixed(2)}" transform="rotate(${i * 360 / S3.max} ${x.toFixed(2)} ${y.toFixed(2)})">${i}</text>`;
+      }
+    }
+    g += `<circle class="knob" r="40"/>`;
+    for (let k = 0; k < 8; k++) {
+      const a = k * 45 * Math.PI / 180;
+      g += `<line class="grip" x1="${(Math.sin(a) * 26).toFixed(2)}" y1="${(-Math.cos(a) * 26).toFixed(2)}" x2="${(Math.sin(a) * 36).toFixed(2)}" y2="${(-Math.cos(a) * 36).toFixed(2)}"/>`;
+    }
+    g += `</g>`;
+    $('#dial').innerHTML = g;
+    void NS;
+  }
+  function applyDial() {
+    $('#dial-rot').setAttribute('transform', `rotate(${S3.rot})`);
+    $('#dial-num').textContent = S3.pos;
+    $('#dial').setAttribute('aria-valuenow', S3.pos);
+  }
+  function s3Step(d) {
+    if (S3.done) return;
+    S3.pos = ((S3.pos + d) % S3.max + S3.max) % S3.max;
+    S3.rot -= d * (360 / S3.max);
+    applyDial();
+    s3Feedback(true);
+  }
+  function s3Feedback(withSound) {
+    if (S3.done) return;
+    const d = cdist(S3.pos, S3.targets[S3.idx]);
+    const level = d === 0 ? 5 : d <= 1 ? 4 : d <= 3 ? 3 : d <= 6 ? 2 : 1;
+    $('#meter').querySelectorAll('i').forEach((el, i) => el.classList.toggle('lit', i < level));
+    $('#meter').classList.toggle('hot', d === 0);
+    $('#led').classList.toggle('on', d === 0);
+    if (d === 0) {
+      if (withSound) { sfx.click(); buzz(25); }
+      $('#s3-status').textContent = 'Click! Lock it in.';
+    } else {
+      if (withSound) sfx.tick();
+      const st = $('#s3-status');
+      if (st.textContent.startsWith('Click')) st.textContent = `Find number ${S3.idx + 1}.`;
+    }
+  }
+  function s3Lock() {
+    if (S3.done) return;
+    if (cdist(S3.pos, S3.targets[S3.idx]) === 0) {
+      const slot = $('#combo').querySelectorAll('span')[S3.idx];
+      slot.textContent = S3.pos; slot.classList.add('filled');
+      S3.idx++;
+      sfx.success(); buzz([30, 40, 30]);
+      if (S3.idx === 3) {
+        S3.done = true;
+        $('#led').classList.add('on');
+        $('#s3-status').textContent = 'The bolts slide back…';
+        stopTimer();
+        setTimeout(startFinale, 900);
+      } else {
+        $('#s3-status').textContent = `Number ${S3.idx} locked. Find number ${S3.idx + 1}.`;
+        s3Feedback(false);
+      }
+    } else {
+      sfx.clunk(); buzz(80); shake($('#dial-wrap'));
+      $('#s3-status').textContent = 'No click there. Keep listening.';
+    }
+  }
+  function angleOf(e) {
+    const r = $('#dial').getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2);
+    const dy = e.clientY - (r.top + r.height / 2);
+    return Math.atan2(dx, -dy) * 180 / Math.PI;
+  }
+  const dial = $('#dial');
+  dial.addEventListener('pointerdown', (e) => {
+    if (S3.done) return;
+    S3.dragging = true; S3.last = angleOf(e); S3.acc = 0;
+    try { dial.setPointerCapture(e.pointerId); } catch (err) {}
+    e.preventDefault();
+  });
+  dial.addEventListener('pointermove', (e) => {
+    if (!S3.dragging) return;
+    const a = angleOf(e);
+    let delta = a - S3.last;
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+    S3.last = a; S3.acc += delta;
+    const stepDeg = 360 / S3.max;
+    // Dragging clockwise turns the dial clockwise, which lowers the number under the marker
+    while (S3.acc >= stepDeg) { S3.acc -= stepDeg; s3Step(-1); }
+    while (S3.acc <= -stepDeg) { S3.acc += stepDeg; s3Step(1); }
+  });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => dial.addEventListener(ev, () => { S3.dragging = false; }));
+
+  function holdButton(btn, d) {
+    const stop = () => { clearTimeout(S3.holdT); clearInterval(S3.holdI); };
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      stop(); s3Step(d);
+      S3.holdT = setTimeout(() => { S3.holdI = setInterval(() => s3Step(d), 80); }, 320);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, stop));
+    btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); s3Step(d); } });
+  }
+  holdButton($('#dial-left'), -1);
+  holdButton($('#dial-right'), 1);
+  $('#lock-btn').addEventListener('click', s3Lock);
+
+  function startStage3() {
+    show('s-stage3'); setStage('Stage 3 of 3');
+    s3Feedback(false);
+  }
+  function resetStage3() {
+    S3.pos = 0; S3.rot = 0; S3.idx = 0; S3.done = false; S3.targets = genTargets();
+    $('#combo').querySelectorAll('span').forEach((s) => { s.textContent = '?'; s.classList.remove('filled'); });
+    $('#s3-status').textContent = 'Find number 1.';
+    $('#led').classList.remove('on');
+    applyDial();
+  }
+
+  /* =========================================================
+     FINALE
+     ========================================================= */
+  let finaleTimers = [];
+  function later(fn, ms) { finaleTimers.push(setTimeout(fn, ms)); }
+  function startFinale() {
+    show('s-finale'); setStage('Vault open');
+    const door = $('#vault-door');
+    door.classList.remove('open');
+    ['#reveal-lead', '#winner-name', '#prize', '#after'].forEach((s) => $(s).classList.remove('show'));
+    $('#winner-name').textContent = '';
+    $('#prize').textContent = '';
+    $('#share-msg').textContent = '';
+    $('#st-time').textContent = fmt(elapsed());
+    $('#st-alarms').textContent = state.alarms;
+    $('#st-hints').textContent = state.hints;
+
+    later(() => { door.classList.add('open'); sfx.creak(); }, 400);
+    later(() => $('#reveal-lead').classList.add('show'), 2100);
+    for (let i = 0; i < 18; i++) later(() => sfx.drum(i), 2300 + i * 75);
+    later(() => {
+      $('#winner-name').textContent = winnerName();
+      $('#prize').textContent = CONFIG.prize || '';
+      $('#prize').hidden = !CONFIG.prize;
+      $('#winner-name').classList.add('show');
+      $('#prize').classList.add('show');
+      sfx.fanfare(); buzz([60, 40, 60, 40, 120]);
+      confetti();
+    }, 3800);
+    later(() => $('#after').classList.add('show'), 4600);
+  }
+
+  function resultText() {
+    const url = CONFIG.shareUrl || location.href.split('#')[0];
+    const a = state.alarms, h = state.hints;
+    return `🔓 I cracked The Payroll Heist in ${fmt(elapsed())} (${a} alarm${a === 1 ? '' : 's'}, ${h} hint${h === 1 ? '' : 's'}). Think you can beat it? ${url}`;
+  }
+  $('#share-btn').addEventListener('click', () => {
+    const text = resultText();
+    const ok = () => { $('#share-msg').textContent = 'Copied. Paste it in your team chat.'; };
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      let done = false;
+      try { done = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      if (done) ok(); else $('#share-msg').textContent = text;
+    };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(ok, fallback);
+    else fallback();
+  });
+
+  $('#again-btn').addEventListener('click', () => { ensureAudio(); newRun(); });
+
+  function winnerName() {
+    try {
+      const bytes = Uint8Array.from(atob(CONFIG.winnerCode), (c) => c.charCodeAt(0));
+      return new TextDecoder().decode(bytes).split('').reverse().join('');
+    } catch (e) { return 'WINNER'; }
+  }
+
+  /* ---------- Confetti ---------- */
+  function confetti() {
+    const c = $('#confetti');
+    const ctx = c.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const W = window.innerWidth, H = window.innerHeight;
+    c.width = W * dpr; c.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#e0ad1a';
+    const colors = [accent, '#ffffff', '#43d98a', '#5aa9ff', '#ff5a66', '#ffd65a'];
+    const count = reduceMotion ? 40 : 180;
+    const parts = Array.from({ length: count }, () => ({
+      x: W / 2 + (Math.random() - 0.5) * 140, y: H * 0.38,
+      vx: (Math.random() - 0.5) * 13, vy: -Math.random() * 13 - 4,
+      w: 6 + Math.random() * 6, h: 4 + Math.random() * 6,
+      r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3,
+      col: colors[Math.floor(Math.random() * colors.length)]
+    }));
+    const t0 = performance.now();
+    (function frame(now) {
+      ctx.clearRect(0, 0, W, H);
+      let alive = false;
+      parts.forEach((p) => {
+        p.vy += 0.28; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        if (p.y < H + 20) alive = true;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.col;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+      });
+      if (alive && now - t0 < 6000) requestAnimationFrame(frame);
+      else ctx.clearRect(0, 0, W, H);
+    })(t0);
+  }
+
+  /* ---------- Run control ---------- */
+  function newRun() {
+    finaleTimers.forEach(clearTimeout); finaleTimers = [];
+    $('#overlay').hidden = true;
+    state.penalty = 0; state.alarms = 0; state.hints = 0;
+    resetStage2();
+    resetStage3();
+    $('#hud').hidden = false;
+    startTimer();
+    startStage1();
+  }
+  $('#start-btn').addEventListener('click', () => { ensureAudio(); newRun(); });
+
+  /* ---------- Keyboard ---------- */
+  document.addEventListener('keydown', (e) => {
+    if (!$('#overlay').hidden) return;
+    if (state.screen === 's-stage2') {
+      if (/^\d$/.test(e.key)) { e.preventDefault(); s2Press(e.key); }
+      else if (e.key === 'Backspace') { e.preventDefault(); s2Press('del'); }
+      else if (e.key === 'Enter') { e.preventDefault(); s2Press('enter'); }
+      return;
+    }
+    const onButton = e.target && e.target.closest && e.target.closest('button');
+    if (onButton && (e.key === ' ' || e.key === 'Enter')) return;
+    if (state.screen === 's-stage1') {
+      const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right', W: 'up', S: 'down', A: 'left', D: 'right' }[e.key];
+      if (k) { e.preventDefault(); s1Move(k); }
+    } else if (state.screen === 's-stage3') {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); s3Step(-1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); s3Step(1); }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); s3Lock(); }
+    }
+  });
+
+  /* ---------- Init ---------- */
+  buildStage2();
+  buildDial();
+  resetStage3();
+})();
+</script>
+</body>
+</html>
